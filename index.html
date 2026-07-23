@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f6f4ee">
+<link rel="manifest" href="manifest.json">
+<title>מעקב מים וחשמל</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg: #f6f4ee;
+    --ink: #1e2422;
+    --panel: #ffffff;
+    --panel-2: #f4f1ea;
+    --line: #ece7d9;
+    --water: #0e8da3;
+    --water-dim: #e1f3f5;
+    --electric: #c2790f;
+    --electric-dim: #fcefd8;
+    --muted: #8b8577;
+    --alert: #c0503b;
+    --good: #3f8f5a;
+    --r-sm: 12px;
+    --r-md: 18px;
+    --r-lg: 24px;
+    --r-pill: 999px;
+    --shadow-sm: 0 1px 2px rgba(30,36,34,.03), 0 4px 10px rgba(30,36,34,.04);
+    --shadow: 0 2px 6px rgba(30,36,34,.04), 0 16px 36px rgba(30,36,34,.07);
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Heebo', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  #app-root{ max-width: 1080px; margin: 0 auto; padding: 28px 18px 70px; display:none; }
+
+  /* ---------- auth gate ---------- */
+  #auth-gate{
+    min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .auth-card{
+    max-width: 420px; text-align:center; background: var(--panel);
+    border-radius: var(--r-lg); padding: 40px 32px; box-shadow: var(--shadow);
+  }
+  .auth-card h1{ font-size:23px; margin: 4px 0 14px; font-weight:800; letter-spacing:-0.3px; }
+  .auth-msg{ color: var(--muted); font-size:14px; line-height:1.7; margin-bottom:24px; }
+  .auth-msg.denied{ color: var(--alert); }
+  .btn.primary-mixed{
+    background: var(--ink); color:#fff; font-weight:700;
+    border:none; padding:13px 26px; border-radius: var(--r-pill); font-family:'Heebo',sans-serif; font-size:14px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px; justify-content:center;
+    transition: all .18s ease;
+  }
+  .btn.primary-mixed:hover{ transform: translateY(-1px); box-shadow: 0 8px 20px rgba(30,36,34,.25); }
+
+  /* ---------- header ---------- */
+  .hdr{ padding: 4px 4px 20px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;}
+  .dual-bar{ height:5px; border-radius: var(--r-pill); overflow:hidden; display:flex; margin-bottom:22px; }
+  .dual-bar span{ flex:1; }
+  .dual-bar .w{ background: var(--water); }
+  .dual-bar .e{ background: var(--electric); }
+  .hdr h1{ font-size: 29px; font-weight: 800; margin:0; letter-spacing:-0.5px; }
+  .hdr-user{ font-size:12px; color: var(--muted); text-align:left; line-height:1.6; }
+  .hdr-user a{ color: var(--muted); text-decoration:underline; cursor:pointer; }
+
+  /* ---------- tab bar ---------- */
+  .tab-bar{
+    display:flex; gap:4px; background: var(--panel); border-radius: var(--r-pill);
+    padding: 6px; margin-bottom: 22px; box-shadow: var(--shadow-sm);
+  }
+  .tab-pill{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    border:none; background:transparent; color: var(--muted);
+    font-family:'Heebo',sans-serif; font-size:14px; font-weight:600;
+    padding: 12px 14px; border-radius: var(--r-pill); cursor:pointer; transition: all .2s ease;
+  }
+  .tab-pill:hover{ color: var(--ink); }
+  .tab-pill .icon{ width:17px; height:17px; }
+  .tab-pill.active{ color:#fff; }
+  .tab-pill.active.water{ background: var(--water); box-shadow: 0 6px 16px rgba(14,141,163,.35); }
+  .tab-pill.active.electric{ background: var(--electric); box-shadow: 0 6px 16px rgba(194,121,15,.32); }
+  .tab-pill.active.dash{ background: var(--ink); box-shadow: 0 6px 16px rgba(30,36,34,.25); }
+
+  /* ---------- upload dock ---------- */
+  .upload-dock{
+    box-shadow: var(--shadow-sm);
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    background: var(--panel); border-radius: var(--r-lg); padding:18px 22px; margin-bottom:16px;
+  }
+  .upload-dock-text strong{ font-size:15px; font-weight:700; }
+  .upload-dock-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .btn.upload-btn{
+    background: var(--ink); color:#fff; font-weight:700;
+    border:none; white-space:nowrap; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn.upload-btn.disabled{ opacity:.5; pointer-events:none; }
+  .icon{ width:16px; height:16px; flex-shrink:0; }
+  .icon-btn{ display:inline-flex; align-items:center; justify-content:center; }
+  .icon-btn .icon{ width:14px; height:14px; }
+  .status-banner{
+    border-radius: var(--r-md); padding:13px 18px; font-size:13px; margin-bottom:18px; line-height:1.6;
+  }
+  .status-banner.loading{ background: var(--panel-2); color: var(--muted); }
+  .status-banner.loading::before{ content:'⏳ '; }
+  .status-banner.success{ background: rgba(63,143,90,0.1); color: var(--good); }
+  .status-banner.error{ background: rgba(192,80,59,0.1); color: var(--alert); }
+
+  /* ---------- section ---------- */
+  .section-title{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+  .section-title h2{ font-size:21px; margin:0; display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-0.3px; }
+  .section-title h2::before{ content:''; width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+  .accent-water{ color: var(--water); }
+  .accent-water::before{ background: var(--water); }
+  .accent-electric{ color: var(--electric); }
+  .accent-electric::before{ background: var(--electric); }
+
+  .btn{
+    font-family:'Heebo',sans-serif; font-size:13.5px; font-weight:600; border-radius: var(--r-pill); border:none;
+    background: var(--panel-2); color: var(--ink); padding:11px 20px; cursor:pointer; transition: all .18s ease;
+    display:inline-flex; align-items:center; gap:7px; justify-content:center;
+  }
+  .btn:hover{ transform: translateY(-1px); }
+  .btn.primary.water{ background: var(--water); color:#fff; box-shadow: 0 6px 16px rgba(14,141,163,.3); }
+  .btn.primary.electric{ background: var(--electric); color:#fff; box-shadow: 0 6px 16px rgba(194,121,15,.28); }
+  .btn.ghost{ background: var(--panel-2); box-shadow:none; }
+
+  /* ---------- form card ---------- */
+  .form-card{
+    background: var(--panel); border-radius: var(--r-lg); padding:22px;
+    margin-bottom:20px; display:none; box-shadow: var(--shadow);
+  }
+  .form-card.open{ display:block; }
+  .form-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:12px; margin-bottom: 14px; }
+  .field label{ display:block; font-size:11.5px; color:var(--muted); margin-bottom:6px; letter-spacing:.2px; font-weight:600; }
+  .field input{
+    width:100%; background: var(--panel-2); border:1.5px solid transparent; border-radius: var(--r-sm); color: var(--ink);
+    padding:10px 12px; font-family:'JetBrains Mono', monospace; font-size:13px; transition: all .15s ease;
+  }
+  .field input:focus{ outline:none; border-color: var(--water); background: var(--panel); box-shadow: 0 0 0 4px var(--water-dim); }
+  .field.notes input{ font-family:'Heebo',sans-serif; }
+  .form-actions{ display:flex; gap:10px; justify-content:flex-start; }
+
+  .combined-groups{ display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-top:18px; }
+  .combined-group h4{ display:flex; align-items:center; gap:7px; font-size:14.5px; margin:0 0 14px; font-weight:700; }
+  .combined-group h4 .dot{ width:8px; height:8px; }
+  .combined-group.water h4{ color: var(--water); }
+  .combined-group.electric h4{ color: var(--electric); }
+  .shared-dates{ display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:12px; padding-bottom:18px; margin-bottom:18px; border-bottom:1.5px dashed var(--line); }
+  @media (max-width: 720px){
+    .combined-groups{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- table ---------- */
+  .table-wrap{ overflow-x:auto; border-radius: var(--r-lg); box-shadow: var(--shadow); background: var(--panel); }
+  table{ width:100%; border-collapse:collapse; min-width: 780px; }
+  thead th{
+    font-size:11px; color:var(--muted); text-align:center; font-weight:600; letter-spacing:.3px;
+    padding:14px 10px; background: var(--panel-2); white-space:nowrap;
+  }
+  .table-wrap.water thead th{ background: var(--water-dim); color: var(--water); font-weight:700; }
+  .table-wrap.electric thead th{ background: var(--electric-dim); color: var(--electric); font-weight:700; }
+  tbody td{
+    text-align:center; padding:13px 10px; font-family:'JetBrains Mono', monospace; font-size:13px;
+    border-bottom:1px solid var(--panel-2); white-space:nowrap;
+  }
+  tbody tr{ background: var(--panel); transition: background .15s ease; }
+  tbody tr:hover{ background: var(--panel-2); }
+  tbody tr:last-child td{ border-bottom:none; }
+  .meter{ font-weight:700; letter-spacing:.3px; }
+  .meter.water{ color: var(--water); }
+  .meter.electric{ color: var(--electric); }
+  .amount-chip{
+    display:inline-block; font-family:'JetBrains Mono',monospace; font-weight:800;
+    padding:6px 14px; border-radius: var(--r-pill); letter-spacing:.2px;
+  }
+  .amount-chip.water{ background: var(--water-dim); color: var(--water); }
+  .amount-chip.electric{ background: var(--electric-dim); color: var(--electric); }
+  .row-actions{ display:flex; gap:6px; justify-content:center; }
+  .icon-btn{
+    background: var(--panel-2); border:none; color:var(--muted); border-radius: var(--r-pill);
+    width:30px; height:30px; cursor:pointer; font-size:12px; line-height:1; transition: all .15s ease;
+  }
+  .icon-btn:hover{ color:var(--ink); background: var(--line); transform: translateY(-1px); }
+  .empty-row td{ padding: 40px 10px; color: var(--muted); font-family:'Heebo',sans-serif; }
+
+  /* ---------- dashboard ---------- */
+  @keyframes cardIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+  .cards{ display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:14px; margin-bottom:22px; }
+  .card{ background: var(--panel); border-radius: var(--r-lg); padding:20px; box-shadow: var(--shadow-sm); animation: cardIn .5s ease both; transition: transform .18s ease, box-shadow .18s ease; }
+  .card:hover{ transform: translateY(-2px); box-shadow: var(--shadow); }
+  .card.water-tint{ background: var(--water-dim); }
+  .card.electric-tint{ background: var(--electric-dim); }
+  .card .k{ font-size:11.5px; color:var(--muted); margin-bottom:10px; letter-spacing:.2px; font-weight:600; }
+  .card .v{ font-family:'JetBrains Mono', monospace; font-size:27px; font-weight:800; letter-spacing:-0.5px; }
+  .card .v.water{ color: var(--water); } .card .v.electric{ color: var(--electric); }
+  .card .d{ font-size:11.5px; color:var(--muted); margin-top:8px; }
+  .trend{ display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:700; padding:3px 9px; border-radius: var(--r-pill); margin-inline-start:8px; vertical-align:middle; font-family:'Heebo',sans-serif; }
+  .trend.up{ color: var(--alert); background: rgba(192,80,59,0.1); }
+  .trend.down{ color: var(--good); background: rgba(63,143,90,0.1); }
+
+  .chart-card{ background: var(--panel); border-radius: var(--r-lg); padding:22px; margin-bottom:18px; box-shadow: var(--shadow-sm); animation: cardIn .5s ease both; position:relative; }
+  .chart-card h3{ margin:0 0 4px; font-size:16px; font-weight:700; }
+  .chart-card .cap{ margin:0 0 16px; font-size:12.5px; color: var(--muted); }
+  .legend{ display:flex; gap:16px; margin-bottom:12px; font-size:12px; color:var(--muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .dot.water{ background: var(--water); } .dot.electric{ background: var(--electric); }
+  .chart-dot{ cursor:pointer; }
+  .chart-tooltip{
+    position:absolute; pointer-events:none; background: var(--ink); color:#fff; font-size:11px;
+    padding:7px 11px; border-radius: var(--r-sm); transform:translate(-50%,-130%); white-space:nowrap; z-index:6;
+    opacity:0; transition:opacity .12s ease; font-family:'JetBrains Mono',monospace;
+  }
+  .chart-tooltip.show{ opacity:1; }
+  .chart-tooltip::after{ content:''; position:absolute; left:50%; bottom:-4px; transform:translateX(-50%); border:5px solid transparent; border-top-color: var(--ink); }
+
+  .donut-wrap{ display:flex; align-items:center; gap:28px; flex-wrap:wrap; }
+  .donut-legend{ display:flex; flex-direction:column; gap:11px; font-size:13.5px; flex:1; min-width:140px; font-weight:600; }
+  .donut-legend .row{ display:flex; align-items:center; gap:8px; }
+  .donut-legend .pct{ margin-inline-start:auto; font-family:'JetBrains Mono',monospace; font-weight:700; }
+
+  .empty-state{ text-align:center; padding:56px 20px; color:var(--muted); font-size:13px; }
+
+  footer.note{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:34px; line-height:1.8; }
+
+  @media (max-width: 560px){
+    .hdr h1{ font-size:23px; }
+    .tab-pill{ font-size:12.5px; padding:10px 8px; }
+    .tab-pill span{ display:none; }
+    .card .v{ font-size:22px; }
+  }
+
+  /* ---------- mobile card-style tables ---------- */
+  @media (max-width: 720px){
+    .table-wrap{ box-shadow:none; background:transparent; }
+    table{ min-width:0; }
+    thead{ display:none; }
+    tbody, tr, td{ display:block; width:100%; }
+    tbody tr{
+      background: var(--panel); box-shadow: var(--shadow-sm); border-radius: var(--r-md);
+      padding:14px 16px; margin-bottom:12px;
+    }
+    tbody td{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom:1px dashed var(--panel-2); padding:9px 0; white-space:normal; text-align:left;
+    }
+    tbody td:last-child{ border-bottom:none; padding-top:12px; }
+    tbody td::before{
+      content: attr(data-label); color:var(--muted); font-family:'Heebo',sans-serif;
+      font-size:11.5px; flex-shrink:0; font-weight:600;
+    }
+    tbody td.notes-cell{ justify-content:flex-start; }
+    tbody td.notes-cell::before{ margin-left:8px; }
+    .row-actions{ width:100%; justify-content:flex-end; }
+    .form-grid{ grid-template-columns: 1fr 1fr; }
+    .empty-row{ box-shadow:none !important; background:transparent !important; padding:0 !important; }
+    .empty-row td{ display:block; text-align:center; padding:34px 10px; }
+    .empty-row td::before{ content:none; }
+  }
+  @media (max-width: 380px){
+    .form-grid{ grid-template-columns: 1fr; }
+    .tab-bar{ gap:2px; padding:5px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div id="auth-gate"></div>
+
+<div id="app-root">
+  <div class="hdr">
+    <div>
+      <h1>מעקב הוצאות מים וחשמל</h1>
+    </div>
+    <div class="hdr-user">מחוברים כ- <span id="user-email"></span><br><a id="signout-link">התנתקות</a></div>
+  </div>
+
+  <div class="dual-bar"><span class="w"></span><span class="e"></span></div>
+
+  <div class="tab-bar">
+    <button class="tab-pill water" data-tab="water"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span>מים</span></button>
+    <button class="tab-pill electric" data-tab="electric"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>חשמל</span></button>
+    <button class="tab-pill dash" data-tab="dash"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>דשבורד</span></button>
+  </div>
+
+  <div class="upload-dock">
+    <div class="upload-dock-text">
+      <strong>הוספת קריאה חדשה</strong>
+    </div>
+    <div class="upload-dock-actions">
+      <button class="btn" id="manual-add-btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>הזנה ידנית</button>
+      <label class="btn upload-btn" for="bill-photo-input" id="upload-btn-label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>העלאת תמונה</label>
+      <input type="file" id="bill-photo-input" accept="image/*" multiple style="display:none">
+    </div>
+  </div>
+  <div class="form-card" id="combined-form"></div>
+  <div id="upload-status"></div>
+
+  <div id="tab-water"></div>
+  <div id="tab-electric"></div>
+  <div id="tab-dash"></div>
+
+  <footer class="note">הנתונים מסונכרנים בזמן אמת דרך Firestore, וגלויים רק למי שמופיע ברשימת האימיילים המורשים.<br>העלאת תמונה שולחת אותה למודל Gemini של Google (דרך Firebase) כדי לקרוא את המספרים - התמונה עצמה לא נשמרת.<br>שדה "סה"כ לתשלום" מוזן ידנית לפי מה שרשום בפועל בחשבון מבעלת הדירה.</footer>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

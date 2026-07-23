@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Only these two Google account emails may read or write data.
+    // Replace with your real emails, then click "Publish" in the Firebase console.
+    function isAllowed() {
+      return request.auth != null &&
+        request.auth.token.email in [
+          "you@gmail.com",
+          "partner@gmail.com"
+        ];
+    }
+
+    match /water/{docId} {
+      allow read, write: if isAllowed();
+    }
+
+    match /electric/{docId} {
+      allow read, write: if isAllowed();
+    }
+  }
+}

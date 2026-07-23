@@ -1,0 +1,11 @@
+{
+  "name": "מעקב מים וחשמל",
+  "short_name": "מים וחשמל",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#f6f4ee",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
