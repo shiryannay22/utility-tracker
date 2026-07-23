@@ -592,7 +592,7 @@ async function handleBillPhotos(ev) {
   if (label) label.classList.add('disabled');
   setUploadStatus('loading', files.length > 1 ? `מנתח ${files.length} תמונות...` : 'מנתח את התמונה...');
 
-  let addedWater = 0, addedElectric = 0, failed = 0;
+  let addedWater = 0, addedElectric = 0, failed = 0, lastErrorMsg = '';
   for (const file of files) {
     try {
       const base64 = await fileToBase64(file);
@@ -613,6 +613,7 @@ async function handleBillPhotos(ev) {
     } catch (err) {
       console.error('bill extraction failed', err);
       failed++;
+      lastErrorMsg = (err && err.message) ? String(err.message) : String(err);
     }
   }
 
@@ -627,7 +628,9 @@ async function handleBillPhotos(ev) {
     if (failed) msg += ` (${failed} תמונות לא זוהו).`;
     setUploadStatus('success', msg);
   } else {
-    setUploadStatus('error', 'לא הצלחתי לזהות נתוני מים או חשמל בתמונה שהועלתה. אפשר לנסות תמונה ברורה וישרה יותר, או להזין את הקריאה ידנית.');
+    let msg = 'לא הצלחתי לזהות נתוני מים או חשמל בתמונה שהועלתה. אפשר לנסות תמונה ברורה וישרה יותר, או להזין את הקריאה ידנית.';
+    if (lastErrorMsg) msg += `<br><br><span style="font-family:'JetBrains Mono',monospace; font-size:11px; opacity:.8;">פרטים טכניים: ${lastErrorMsg}</span>`;
+    setUploadStatus('error', msg);
   }
 }
 
